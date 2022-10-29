@@ -1,0 +1,156 @@
+diff --git a/src/cogent3/core/annotation.py b/src/cogent3/core/annotation.py
+index b7d3104d..ecdd63d7 100644
+--- a/src/cogent3/core/annotation.py
++++ b/src/cogent3/core/annotation.py
+@@ -1,6 +1,6 @@
+ import copy
+-import abc 
+ import json
++import abc
+ 
+ from collections import defaultdict
+ from fnmatch import fnmatch
+@@ -16,7 +16,7 @@ __author__ = "Peter Maxwell and Gavin Huttley"
+ __copyright__ = "Copyright 2007-2022, The Cogent Project"
+ __credits__ = ["Peter Maxwell", "Gavin Huttley"]
+ __license__ = "BSD-3"
+-__version__ = "2022.4.20a1"
++__version__ = "2022.8.24a1"
+ __maintainer__ = "Gavin Huttley"
+ __email__ = "gavin.huttley@anu.edu.au"
+ __status__ = "Production"
+@@ -509,7 +509,6 @@ def SimpleVariable(parent, type, name, data):
+     map = Map([(0, len(data))], parent_length=len(parent))
+     return _SimpleVariable(parent, map, type=type, name=name, data=data)
+ 
+-
+ class AnnotationDbBase(abc.ABC):
+ 
+     @abc.abstractmethod
+@@ -604,27 +603,3 @@ class GffAnnotationDb(AnnotationDbBase):
+         
+         return list(rowdict.values())
+ 
+-
+-def _make_genbank_db():
+-    ...
+-
+-class GenbankAnnotationDb(AnnotationDbBase):
+-
+-    def __init__(self, path=None):
+-        self.db = _make_genbank_db()
+-        if path:
+-            self.populate_from_file(path)
+-        ...
+-    
+-    def populate_from_file(self, path):
+-        ...
+-
+-    def make_sql_query(self):
+-        ...
+-
+-    def find_records(self,name=None,bio_type=None,idenitifer=None,start=None,end=None):
+-        ...
+-        #return a list of dictionaries 
+-        #[dict(type="", name="", spans=[]), ...]
+-        # Feature(self, **d)
+-
+diff --git a/tests/test_core/test_annotation.py b/tests/test_core/test_annotation.py
+index f8b2adf0..53f50564 100644
+--- a/tests/test_core/test_annotation.py
++++ b/tests/test_core/test_annotation.py
+@@ -12,7 +12,7 @@ __author__ = "Gavin Huttley"
+ __copyright__ = "Copyright 2007-2022, The Cogent Project"
+ __credits__ = ["Gavin Huttley"]
+ __license__ = "BSD-3"
+-__version__ = "2022.4.20a1"
++__version__ = "2022.8.24a1"
+ __maintainer__ = "Gavin Huttley"
+ __email__ = "gavin.huttley@anu.edu.au"
+ __status__ = "Production"
+@@ -383,27 +383,5 @@ def test_find_records():
+     expected = 1 
+     assert got == expected 
+     
+-
+-    
+-
+-    
+-
+-
+-    
+-
+-
+-
+-    
+-
+-
+-
+-
+-
+-
+-
+-  
+-
+-
+-
+ if __name__ == "__main__":
+     unittest.main()
+diff --git a/tests/test_core/test_sequence.py b/tests/test_core/test_sequence.py
+index f5e8e7db..3fe918ed 100644
+--- a/tests/test_core/test_sequence.py
++++ b/tests/test_core/test_sequence.py
+@@ -1281,51 +1281,8 @@ class ModelSequenceTests(SequenceTests):
+         c = seq.counts(allow_gap=True)
+         self.assertEqual(c.to_dict(), {"a": 3, "b": 1, "-": 1})
+ 
+-def test_one():
+-
+-    from cogent3.parse.gff import gff_parser
+-    from cogent3.parse.fasta import FastaParser
+-    from cogent3.core.sequence import make_annotation_db
+-    from cogent3.core.sequence import _make_sql_query
+-    from cogent3.parse.gff import gff_parser
+-    import sqlite3
+-    from cogent3.core.annotation import GffAnnotationDb
+-    fasta_path = '/Users/kiratalreja/Downloads/short.fsa'
+-    gff_path = '/Users/kiratalreja/Downloads/prok_NoLocusTags.gff'
+-    name,seq = next(FastaParser(fasta_path))
+-    seq.name = 'sequence001'
+-    seq_obj = Sequence(seq)
+-
+-    db = GffAnnotationDb(gff_path)
+-    records_dict = seq_obj.find_records(bio_type='CDS')
+-    records_dict
+-    
+-
+-
+-
+-
+-def test_make_sql_query():
+-
+-    from cogent3.core.sequence import _make_sql_query
+-
+-    #only bio_type provided
+-    expect = "SELECT * FROM GFF WHERE SeqID == ? AND Start >= ? AND End < ? AND Type == ?",[30,20,'CDS']
+-    got = _make_sql_query(start=30,end=20,bio_type='CDS')
+-   
+-    
+-    
+-    #only an attribute (**kwargs) provided
+-    assert(("SELECT * FROM GFF WHERE SeqID == ? AND Start >= ? AND End < ? AND Attributes like ?"
+-    ,[30,20,'%RandomAttribute%']),_make_sql_query(start=30,end=20,random = 'RandomAttribute'))
+-    
+-    #only the identifer is provided
+-    assertEqual(("SELECT * FROM GFF WHERE SeqID == ? AND Start >= ? AND End < ? AND Attributes like ?"
+-    ,[30,20,'%RandomID%']),_make_sql_query(start=30,end=20,identifier = 'RandomID'))
+-    
+-    #all three arguments providedmai 
+-    assertEqual(("SELECT * FROM GFF WHERE SeqID == ? AND Start >= ? AND End < ? AND Type == ? AND Attributes like ? AND Attributes like ?"
+-    ,[30,20,'CDS','%RandomID%','%RandomAttribute%']),_make_sql_query(start=30,end=20,bio_type = 'CDS',identifier = 'RandomID',random = 'RandomAttribute'))
+-    
++
++
+ 
+                 
+ 

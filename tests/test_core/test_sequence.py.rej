@@ -1,0 +1,62 @@
+***************
+*** 1281,1331 ****
+          c = seq.counts(allow_gap=True)
+          self.assertEqual(c.to_dict(), {"a": 3, "b": 1, "-": 1})
+  
+- def test_one():
+- 
+-     from cogent3.parse.gff import gff_parser
+-     from cogent3.parse.fasta import FastaParser
+-     from cogent3.core.sequence import make_annotation_db
+-     from cogent3.core.sequence import _make_sql_query
+-     from cogent3.parse.gff import gff_parser
+-     import sqlite3
+-     from cogent3.core.annotation import GffAnnotationDb
+-     fasta_path = '/Users/kiratalreja/Downloads/short.fsa'
+-     gff_path = '/Users/kiratalreja/Downloads/prok_NoLocusTags.gff'
+-     name,seq = next(FastaParser(fasta_path))
+-     seq.name = 'sequence001'
+-     seq_obj = Sequence(seq)
+- 
+-     db = GffAnnotationDb(gff_path)
+-     records_dict = seq_obj.find_records(bio_type='CDS')
+-     records_dict
+-     
+- 
+- 
+- 
+- 
+- def test_make_sql_query():
+- 
+-     from cogent3.core.sequence import _make_sql_query
+- 
+-     #only bio_type provided
+-     expect = "SELECT * FROM GFF WHERE SeqID == ? AND Start >= ? AND End < ? AND Type == ?",[30,20,'CDS']
+-     got = _make_sql_query(start=30,end=20,bio_type='CDS')
+-    
+-     
+-     
+-     #only an attribute (**kwargs) provided
+-     assert(("SELECT * FROM GFF WHERE SeqID == ? AND Start >= ? AND End < ? AND Attributes like ?"
+-     ,[30,20,'%RandomAttribute%']),_make_sql_query(start=30,end=20,random = 'RandomAttribute'))
+-     
+-     #only the identifer is provided
+-     assertEqual(("SELECT * FROM GFF WHERE SeqID == ? AND Start >= ? AND End < ? AND Attributes like ?"
+-     ,[30,20,'%RandomID%']),_make_sql_query(start=30,end=20,identifier = 'RandomID'))
+-     
+-     #all three arguments providedmai 
+-     assertEqual(("SELECT * FROM GFF WHERE SeqID == ? AND Start >= ? AND End < ? AND Type == ? AND Attributes like ? AND Attributes like ?"
+-     ,[30,20,'CDS','%RandomID%','%RandomAttribute%']),_make_sql_query(start=30,end=20,bio_type = 'CDS',identifier = 'RandomID',random = 'RandomAttribute'))
+-     
+  
+                  
+  
+--- 1281,1288 ----
+          c = seq.counts(allow_gap=True)
+          self.assertEqual(c.to_dict(), {"a": 3, "b": 1, "-": 1})
+  
++ 
++ 
+  
+                  
+  
