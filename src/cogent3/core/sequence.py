@@ -41,6 +41,9 @@ from cogent3.core.info import Info as InfoClass
 from cogent3.format.fasta import alignment_to_fasta
 from cogent3.maths.stats.contingency import CategoryCounts
 from cogent3.maths.stats.number import CategoryCounter
+from cogent3.core.annotation import AnnotationDbBase
+from cogent3.core.annotation import GffAnnotationDb
+from cogent3.core.annotation import GenbankAnnotationDb
 from cogent3.parse import gff
 from cogent3.util.dict_array import DictArrayTemplate
 from cogent3.util.misc import (
@@ -1214,6 +1217,23 @@ class Sequence(_Annotatable, SequenceI):
         return new_seq
 
 
+    def annotate_from_db(self, db: AnnotationDbBase, bio_type=None, identifier=None, start=None, end=None, strand=None) -> None:
+
+        if not isinstance(db, AnnotationDbBase):
+                raise ValueError(f"{type(db)} must inherit from AnnotateDbBase")
+
+        if not start:
+            start = 0
+        
+        if not end:
+            end = len(self)
+
+        features = db.find_records(start,end,bio_type=bio_type,identifier=identifier)
+
+        for feature in features:
+            self.add_feature(type=feature['type'],name=feature['name'],spans=feature['spans'])
+
+
 class ProteinSequence(Sequence):
     """Holds the standard Protein sequence."""
 
@@ -1934,6 +1954,10 @@ class ArrayCodonSequence(ArraySequence):
         for i, v in enumerate(unpacked):
             result[:, i] = v
         return ArrayRnaSequence(ravel(result), name=self.name)
+
+    
+
+
 
 
 class ArrayDnaCodonSequence(ArrayCodonSequence):

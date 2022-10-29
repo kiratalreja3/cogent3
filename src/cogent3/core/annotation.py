@@ -558,8 +558,8 @@ class GffAnnotationDb(AnnotationDbBase):
             self.db.execute("INSERT INTO GFF VALUES (?,?,?,?,?,?,?,?,?)",
             (to_list[0],to_list[1],to_list[2],to_list[3],to_list[4],to_list[5],to_list[6],to_list[7],json.dumps(to_list[8])));
 
-    def db_query(self,bio_type=None,identifier=None):
-        query, values = self._make_sql_query(bio_type=bio_type, identifier=identifier)
+    def db_query(self,start,end,bio_type=None,identifier=None):
+        query, values = self._make_sql_query(start,end,bio_type=bio_type, identifier=identifier)
         self.db.execute(""" SELECT SeqID FROM GFF LIMIT 1""");
         self.name = list(self.db.fetchall())[0]['SeqID']
         values.insert(0, self.name)
@@ -567,14 +567,18 @@ class GffAnnotationDb(AnnotationDbBase):
         rows = self.db.fetchall()
         return rows
 
-    def _make_sql_query(self,bio_type=None,identifier=None):
+    def _make_sql_query(self,start,end,bio_type=None,identifier=None):
             #The user must provide one of the following arguments
             if not any([bio_type, identifier]):
                 raise ValueError("no arguments provided")
 
-            query = "SELECT * FROM GFF WHERE SeqID == ? AND "
+            query = "SELECT * FROM GFF WHERE SeqID == ? AND Start >= ? AND End <= ? AND "
+            
             clauses = []
             values = []
+
+            values.append(start)
+            values.append(end)
 
             if bio_type:
                 clauses.append("Type == ?")
@@ -587,12 +591,12 @@ class GffAnnotationDb(AnnotationDbBase):
             
             return query + " AND ".join(clauses), values
 
-    def find_records(self,name=None,bio_type=None,identifier=None):
+    def find_records(self,start,end,name=None,bio_type=None,identifier=None):
         #return a list of dictionaries 
         #[dict(type="", name="", spans=[]), ...]
         # Feature(self, **d)
         rowdict = {}
-        for row in self.db_query(bio_type ,identifier):
+        for row in self.db_query(start,end,bio_type ,identifier):
             attr = json.loads(row['Attributes'])
             id_ = attr['ID']
 
