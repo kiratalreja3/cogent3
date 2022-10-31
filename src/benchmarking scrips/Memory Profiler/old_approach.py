@@ -1,7 +1,6 @@
 from memory_profiler import profile
 from cogent3 import load_unaligned_seqs
 from cogent3.parse.gff import gff_parser
-import line_profiler
 
 @profile
 def old_approach():

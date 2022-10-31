@@ -1228,9 +1228,7 @@ class Sequence(_Annotatable, SequenceI):
         if not end:
             end = len(self)
 
-        features = db.find_records(start,end,bio_type=bio_type,identifier=identifier)
-        
-        for feature in features:
+        for feature in db.find_records(start,end,bio_type=bio_type,identifier=identifier):
             self.add_feature(type=feature['type'],name=feature['name'],spans=feature['spans'])
 
 

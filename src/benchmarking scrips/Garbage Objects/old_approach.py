@@ -1,9 +1,7 @@
-from memory_profiler import profile
+import gc
 from cogent3 import load_unaligned_seqs
 from cogent3.parse.gff import gff_parser
-import line_profiler
 
-@profile
 def old_approach():
     def fix_gff(gff):
         return [r for r in gff if r["Attributes"]['ID']]
@@ -24,3 +22,4 @@ def old_approach():
 
 if __name__ == '__main__':
     old_approach()
+    print(len(gc.get_objects()))

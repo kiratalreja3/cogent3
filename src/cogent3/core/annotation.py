@@ -595,7 +595,6 @@ class GffAnnotationDb(AnnotationDbBase):
         return rows
 
     def _make_sql_query(self, start, end, bio_type=None, identifier=None):
-        # The user must provide one of the following arguments
         if not any([bio_type, identifier]):
             raise ValueError("no arguments provided")
 
@@ -612,16 +611,12 @@ class GffAnnotationDb(AnnotationDbBase):
             values.append(bio_type)
 
         if identifier:
-            # identifier can be stored as "ID" or "Parent"
             clauses.append("Attributes like ?")
             values.append(f"%{identifier}%")
 
         return query + " AND ".join(clauses), values
 
     def find_records(self, start, end, name=None, bio_type=None, identifier=None):
-        # return a list of dictionaries
-        # [dict(type="", name="", spans=[]), ...]
-        # Feature(self, **d)
         rowdict = {}
         for row in self.db_query(start, end, bio_type, identifier):
             attr = json.loads(row["Attributes"])
@@ -697,7 +692,7 @@ class GenbankAnnotationDb(AnnotationDbBase):
                 ),
             )
 
-    def db_query(self, start, end, bio_type=None, identifier=None):
+    def db_query(self, bio_type=None, identifier=None):
         query, values = self._make_sql_query(
             start, end, bio_type=bio_type, identifier=identifier
         )
@@ -708,34 +703,29 @@ class GenbankAnnotationDb(AnnotationDbBase):
         rows = self.db.fetchall()
         return rows
 
-    def _make_sql_query(self, start, end, bio_type=None, identifier=None):
-        # The user must provide one of the following arguments
+    def _make_sql_query(self, bio_type=None, identifier=None):
+
         if not any([bio_type, identifier]):
             raise ValueError("no arguments provided")
 
         query = "SELECT * FROM GENBANK WHERE LocusID == ? AND "
         clauses = []
         values = []
-        # values.append(start)
-        # values.append(end)
 
         if bio_type:
             clauses.append("Type == ?")
             values.append(bio_type)
 
         if identifier:
-            # identifier can be stored as "ID" or "Parent"
             clauses.append("Locus_Tag like ?")
             values.append(f"%{identifier}%")
 
         return query + " AND ".join(clauses), values
 
     def find_records(self, start, end, name=None, bio_type=None, identifier=None):
-        # return a list of dictionaries
-        # [dict(type="", name="", spans=[]), ...]
-        # Feature(self, **d)
+
         rowdict = {}
-        for row in self.db_query(start, end, bio_type, identifier):
+        for row in self.db_query(bio_type, identifier):
             id_ = json.loads(row["Locus_Tag"])[0]
 
             dict_value = id_ + row["Type"]
@@ -745,15 +735,10 @@ class GenbankAnnotationDb(AnnotationDbBase):
                 "type": row["Type"],
                 "spans": json.loads(row["Spans"]),
             }
-        
-        feature_list = list(rowdict.values())
 
-        for feature in feature_list:
-            spans = feature['spans']
-            for span in spans:
-                span_start = span[0]
-                span_end = span[1]
-                assert span_start >= start 
-                assert span_end <= end
+        for feature in list(rowdict.values()):
+            for span in feature['spans']:
+                assert span[0] >= start 
+                assert span[1] <= end
 
         return list(rowdict.values())
