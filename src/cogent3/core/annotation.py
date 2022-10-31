@@ -509,26 +509,38 @@ def SimpleVariable(parent, type, name, data):
     map = Map([(0, len(data))], parent_length=len(parent))
     return _SimpleVariable(parent, map, type=type, name=name, data=data)
 
-class AnnotationDbBase(abc.ABC):
 
+class AnnotationDbBase(abc.ABC):
     @abc.abstractmethod
-    def find_records(self,name=None,bio_type=None,idenitifer=None):
+    def find_records(self, name=None, bio_type=None, idenitifer=None):
         """returns matching records"""
 
+
 def fetch_from_dict(values):
-    return [values['SeqID'],values['Source'],values['Type'],values['Start'],values['End'],values['Score']
-            ,values['Strand'],values['Phase'],values['Attributes']]
+    return [
+        values["SeqID"],
+        values["Source"],
+        values["Type"],
+        values["Start"],
+        values["End"],
+        values["Score"],
+        values["Strand"],
+        values["Phase"],
+        values["Attributes"],
+    ]
 
 
 def _make_gff3_db():
 
-        import sqlite3
-        conn = sqlite3.connect(':memory:')
-        conn.row_factory = sqlite3.Row
+    import sqlite3
 
-        c = conn.cursor()
+    conn = sqlite3.connect(":memory:")
+    conn.row_factory = sqlite3.Row
 
-        c.execute(""" CREATE TABLE GFF (
+    c = conn.cursor()
+
+    c.execute(
+        """ CREATE TABLE GFF (
                 SeqID text,
                 Source text,
                 Type text,
@@ -539,163 +551,209 @@ def _make_gff3_db():
                 Phase text,
                 Attributes text
             
-            )"""                             );
+            )"""
+    )
 
-        return c
+    return c
+
 
 class GffAnnotationDb(AnnotationDbBase):
-
     def __init__(self, path=None):
         self.db = _make_gff3_db()
         if path:
             self.populate_from_file(path)
-        
-    
-    def populate_from_file(self, path):
-         from cogent3.parse.gff import gff_parser
-         for record in gff_parser(path):
-            to_list = fetch_from_dict(dict(record))
-            self.db.execute("INSERT INTO GFF VALUES (?,?,?,?,?,?,?,?,?)",
-            (to_list[0],to_list[1],to_list[2],to_list[3],to_list[4],to_list[5],to_list[6],to_list[7],json.dumps(to_list[8])));
 
-    def db_query(self,start,end,bio_type=None,identifier=None):
-        query, values = self._make_sql_query(start,end,bio_type=bio_type, identifier=identifier)
-        self.db.execute(""" SELECT SeqID FROM GFF LIMIT 1""");
-        self.name = list(self.db.fetchall())[0]['SeqID']
+    def populate_from_file(self, path):
+        from cogent3.parse.gff import gff_parser
+
+        for record in gff_parser(path):
+            to_list = fetch_from_dict(dict(record))
+            self.db.execute(
+                "INSERT INTO GFF VALUES (?,?,?,?,?,?,?,?,?)",
+                (
+                    to_list[0],
+                    to_list[1],
+                    to_list[2],
+                    to_list[3],
+                    to_list[4],
+                    to_list[5],
+                    to_list[6],
+                    to_list[7],
+                    json.dumps(to_list[8]),
+                ),
+            )
+
+    def db_query(self, start, end, bio_type=None, identifier=None):
+        query, values = self._make_sql_query(
+            start, end, bio_type=bio_type, identifier=identifier
+        )
+        self.db.execute(""" SELECT SeqID FROM GFF LIMIT 1""")
+        self.name = list(self.db.fetchall())[0]["SeqID"]
         values.insert(0, self.name)
-        self.db.execute(query, tuple(values));
+        self.db.execute(query, tuple(values))
         rows = self.db.fetchall()
         return rows
 
-    def _make_sql_query(self,start,end,bio_type=None,identifier=None):
-            #The user must provide one of the following arguments
-            if not any([bio_type, identifier]):
-                raise ValueError("no arguments provided")
+    def _make_sql_query(self, start, end, bio_type=None, identifier=None):
+        # The user must provide one of the following arguments
+        if not any([bio_type, identifier]):
+            raise ValueError("no arguments provided")
 
-            query = "SELECT * FROM GFF WHERE SeqID == ? AND Start >= ? AND End <= ? AND "
-            
-            clauses = []
-            values = []
+        query = "SELECT * FROM GFF WHERE SeqID == ? AND Start >= ? AND End <= ? AND "
 
-            values.append(start)
-            values.append(end)
+        clauses = []
+        values = []
 
-            if bio_type:
-                clauses.append("Type == ?")
-                values.append(bio_type)
-            
-            if identifier:
-                #identifier can be stored as "ID" or "Parent"
-                clauses.append("Attributes like ?")
-                values.append(f"%{identifier}%")
-            
-            return query + " AND ".join(clauses), values
+        values.append(start)
+        values.append(end)
 
-    def find_records(self,start,end,name=None,bio_type=None,identifier=None):
-        #return a list of dictionaries 
-        #[dict(type="", name="", spans=[]), ...]
+        if bio_type:
+            clauses.append("Type == ?")
+            values.append(bio_type)
+
+        if identifier:
+            # identifier can be stored as "ID" or "Parent"
+            clauses.append("Attributes like ?")
+            values.append(f"%{identifier}%")
+
+        return query + " AND ".join(clauses), values
+
+    def find_records(self, start, end, name=None, bio_type=None, identifier=None):
+        # return a list of dictionaries
+        # [dict(type="", name="", spans=[]), ...]
         # Feature(self, **d)
         rowdict = {}
-        for row in self.db_query(start,end,bio_type ,identifier):
-            attr = json.loads(row['Attributes'])
-            id_ = attr['ID']
+        for row in self.db_query(start, end, bio_type, identifier):
+            attr = json.loads(row["Attributes"])
+            id_ = attr["ID"]
 
             if id_ not in rowdict:
-                rowdict[id_] = {'name' : id_, 'type' : row['Type'], 'spans' : [(row['Start'],row['End'])]}
+                rowdict[id_] = {
+                    "name": id_,
+                    "type": row["Type"],
+                    "spans": [(row["Start"], row["End"])],
+                }
             else:
-                rowdict[id_]['spans'].append((row['Start'],row['End']))
-        
+                rowdict[id_]["spans"].append((row["Start"], row["End"]))
+
         return list(rowdict.values())
+
 
 def fetch_from_featuredict(feature):
     location = [(f.first(), f.last()) for f in feature["location"]]
-    return [feature['type'],location,feature['locus_tag']]
+    return [feature["type"], location, feature["locus_tag"]]
+
 
 def _make_genbank_db():
 
-        import sqlite3
-        conn = sqlite3.connect(':memory:')
-        conn.row_factory = sqlite3.Row
+    import sqlite3
 
-        c = conn.cursor()
+    conn = sqlite3.connect(":memory:")
+    conn.row_factory = sqlite3.Row
 
-        c.execute(""" CREATE TABLE GENBANK (
+    c = conn.cursor()
+
+    c.execute(
+        """ CREATE TABLE GENBANK (
                 LocusID text,
                 Type text,
                 Spans text,
                 Locus_Tag text
             
-            )"""                             );
+            )"""
+    )
 
-        return c
+    return c
+
 
 class GenbankAnnotationDb(AnnotationDbBase):
+    def __init__(self, path=None):
+        self.db = _make_genbank_db()
+        if path:
+            self.populate_from_file(path)
 
-        def __init__(self, path=None):
-            self.db = _make_genbank_db()
-            if path:
-                self.populate_from_file(path)
+    def populate_from_file(self, path):
+        from cogent3.parse.genbank import MinimalGenbankParser
+        from cogent3 import open_
 
-        def populate_from_file(self, path):
-            from cogent3.parse.genbank import MinimalGenbankParser
-            from cogent3 import open_
+        with open_(path) as infile:
+            data = list(MinimalGenbankParser(infile))
 
-            with open_(path) as infile:
-                data = list(MinimalGenbankParser(infile))
+        record = data[0]
+        LocusID = record["locus"]
+        for feature in record["features"][1:]:
+            if "locus_tag" not in list(feature.keys()):
+                continue
 
-            record = data[0]
-            LocusID = record['locus']
-            for feature in record['features'][1:]:
-                if 'locus_tag' not in list(feature.keys()):
-                    continue
-                    
-                to_list = fetch_from_featuredict(feature)
-                to_list.insert(0,LocusID)
-                self.db.execute("INSERT INTO GENBANK VALUES (?,?,?,?)",
-                (to_list[0],to_list[1],json.dumps(to_list[2]),json.dumps(to_list[3])));
+            to_list = fetch_from_featuredict(feature)
+            to_list.insert(0, LocusID)
+            self.db.execute(
+                "INSERT INTO GENBANK VALUES (?,?,?,?)",
+                (
+                    to_list[0],
+                    to_list[1],
+                    json.dumps(to_list[2]),
+                    json.dumps(to_list[3]),
+                ),
+            )
 
-        def db_query(self,bio_type=None,identifier=None):
-                query, values = self._make_sql_query(bio_type=bio_type, identifier=identifier)
-                self.db.execute(""" SELECT LocusID FROM GENBANK LIMIT 1""");
-                self.name = list(self.db.fetchall())[0]['LocusID']
-                values.insert(0, self.name)
-                self.db.execute(query, tuple(values));
-                rows = self.db.fetchall()
-                return rows
+    def db_query(self, start, end, bio_type=None, identifier=None):
+        query, values = self._make_sql_query(
+            start, end, bio_type=bio_type, identifier=identifier
+        )
+        self.db.execute(""" SELECT LocusID FROM GENBANK LIMIT 1""")
+        self.name = list(self.db.fetchall())[0]["LocusID"]
+        values.insert(0, self.name)
+        self.db.execute(query, tuple(values))
+        rows = self.db.fetchall()
+        return rows
 
-        def _make_sql_query(self,bio_type=None,identifier=None):
-            #The user must provide one of the following arguments
-            if not any([bio_type, identifier]):
-                raise ValueError("no arguments provided")
+    def _make_sql_query(self, start, end, bio_type=None, identifier=None):
+        # The user must provide one of the following arguments
+        if not any([bio_type, identifier]):
+            raise ValueError("no arguments provided")
 
-            query = "SELECT * FROM GENBANK WHERE LocusID == ? AND "
-            clauses = []
-            values = []
+        query = "SELECT * FROM GENBANK WHERE LocusID == ? AND "
+        clauses = []
+        values = []
+        # values.append(start)
+        # values.append(end)
 
-            if bio_type:
-                clauses.append("Type == ?")
-                values.append(bio_type)
-            
-            if identifier:
-                #identifier can be stored as "ID" or "Parent"
-                clauses.append("Locus_Tag like ?")
-                values.append(f"%{identifier}%")
-            
-            return query + " AND ".join(clauses), values
+        if bio_type:
+            clauses.append("Type == ?")
+            values.append(bio_type)
 
-        def find_records(self,name=None,bio_type=None,identifier=None):
-            #return a list of dictionaries 
-            #[dict(type="", name="", spans=[]), ...]
-            # Feature(self, **d)
-            rowdict = {}
-            for row in self.db_query(bio_type ,identifier):
-                id_ = json.loads(row['Locus_Tag'])[0]
+        if identifier:
+            # identifier can be stored as "ID" or "Parent"
+            clauses.append("Locus_Tag like ?")
+            values.append(f"%{identifier}%")
 
-                dict_value = id_ + row['Type']
+        return query + " AND ".join(clauses), values
 
-                rowdict[dict_value] = {'name' : id_, 'type' : row['Type'], 'spans' : json.loads(row['Spans'])}
+    def find_records(self, start, end, name=None, bio_type=None, identifier=None):
+        # return a list of dictionaries
+        # [dict(type="", name="", spans=[]), ...]
+        # Feature(self, **d)
+        rowdict = {}
+        for row in self.db_query(start, end, bio_type, identifier):
+            id_ = json.loads(row["Locus_Tag"])[0]
 
-            return list(rowdict.values())
+            dict_value = id_ + row["Type"]
 
+            rowdict[dict_value] = {
+                "name": id_,
+                "type": row["Type"],
+                "spans": json.loads(row["Spans"]),
+            }
+        
+        feature_list = list(rowdict.values())
 
+        for feature in feature_list:
+            spans = feature['spans']
+            for span in spans:
+                span_start = span[0]
+                span_end = span[1]
+                assert span_start >= start 
+                assert span_end <= end
 
+        return list(rowdict.values())

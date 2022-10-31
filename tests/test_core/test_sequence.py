@@ -1375,6 +1375,18 @@ class ModelSequenceTests(SequenceTests):
         c = seq.counts(allow_gap=True)
         self.assertEqual(c.to_dict(), {"a": 3, "b": 1, "-": 1})
 
+def test_one():
+    from cogent3.core.annotation import GenbankAnnotationDb
+    from cogent3 import load_aligned_seqs
+
+
+    genbank_path = '/Users/kiratalreja/repos/test_files/genbang/NC_000913.3.gb'
+    seqs = load_aligned_seqs(genbank_path,moltype='dna')
+    seq = seqs.seqs[0]
+    gb_path = '/Users/kiratalreja/repos/test_files/genbang/NC_000913.3.gb'
+    db = GenbankAnnotationDb(gb_path)
+    seq.annotate_from_db(db,bio_type='gene')
+
 
 # run if called from command-line
 if __name__ == "__main__":
