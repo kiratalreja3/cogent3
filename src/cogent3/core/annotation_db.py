@@ -117,7 +117,7 @@ class GffAnnotationDb(AnnotationDbBase):
         if not any([bio_type, identifier]):
             raise ValueError("no arguments provided")
 
-        query = "SELECT * FROM GFF "
+        query = "SELECT * FROM GFF WHERE "
         clauses = []
         values = []
 
@@ -179,22 +179,39 @@ class GffAnnotationDb(AnnotationDbBase):
             return set()
 
         components = []
+        query_template = 'SELECT DISTINCT {} FROM gff'
+
+        value_dict = dict()
 
         if seq_name:
-            components.append(seq_name)
+            seq_name_set = set()
+            query_template_seq = query_template.format("SeqID")
+            self.db.execute('SELECT DISTINCT SeqID FROM gff')
+            result = self.db.fetchall()
+            for row in result:
+                seq_name_set.add(row['SeqID'])
+            value_dict['SeqID'] = seq_name_set
 
         if bio_type:
-            components.append(bio_type)
+            type_set = set()
+            query_template_type = query_template.format("Type")
+            self.db.execute('SELECT DISTINCT Type FROM gff')
+            result = self.db.fetchall()
+            for row in result:
+                type_set.add(row['Type'])
+            value_dict['Type'] = type_set
 
         if identifier:
-            components.append(identifier)
+            identifier_set = set()
+            query_template_identifier = query_template.format("Attributes")
+            self.db.execute('SELECT DISTINCT Attributes FROM gff')
+            result = self.db.fetchall()
+            for row in result:
+                identifier_set.add(json.loads(row['Attributes'])['ID'])
+            value_dict['identifier'] = identifier_set
 
-        query_template = 'SELECT DISTINCT {} FROM gff ORDER BY MIN(rowid)'
-        query_template = query_template.format(','.join(components))
         
-        
-
-    
+        return value_dict
 
 
 def _fetch_from_features(feature):
