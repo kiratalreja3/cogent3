@@ -87,12 +87,21 @@ class GffAnnotationDb(AnnotationDbBase):
         self._populate_from_file(path)
 
     def _populate_from_file(self, path):
+
+        sql_template = "INSERT INTO GFF VALUES {}"
+        sql = None
+
         for record in gff_parser(path):
             data = _ordered_values(dict(record))
             data[-1] = json.dumps(data[-1])
+
+            if sql is None:
+                data_placeholder = f"({','.join(('?',)*len(data))})"
+                sql = sql_template.format(data_placeholder)
+
             self.db.execute(
-                "INSERT INTO GFF VALUES (?,?,?,?,?,?,?,?,?)",
-                data,
+                sql,
+                data
             )
 
     def db_query(
@@ -178,14 +187,12 @@ class GffAnnotationDb(AnnotationDbBase):
         if not any ([seq_name,bio_type,identifier]):
             return set()
 
-        components = []
-        query_template = 'SELECT DISTINCT {} FROM gff'
+
 
         value_dict = dict()
 
         if seq_name:
             seq_name_set = set()
-            query_template_seq = query_template.format("SeqID")
             self.db.execute('SELECT DISTINCT SeqID FROM gff')
             result = self.db.fetchall()
             for row in result:
@@ -194,7 +201,6 @@ class GffAnnotationDb(AnnotationDbBase):
 
         if bio_type:
             type_set = set()
-            query_template_type = query_template.format("Type")
             self.db.execute('SELECT DISTINCT Type FROM gff')
             result = self.db.fetchall()
             for row in result:
@@ -203,7 +209,6 @@ class GffAnnotationDb(AnnotationDbBase):
 
         if identifier:
             identifier_set = set()
-            query_template_identifier = query_template.format("Attributes")
             self.db.execute('SELECT DISTINCT Attributes FROM gff')
             result = self.db.fetchall()
             for row in result:
@@ -222,7 +227,7 @@ def _fetch_from_features(feature):
     return [
         feature["type"],
         json.dumps(location),
-        feature["locus_tag"],
+        feature["locus_tag"][0],
         start,
         end,
         strand,
@@ -243,7 +248,7 @@ def _make_genbank_db():
                 Locus_Tag text,
                 Start integer,
                 End integer,
-                Strand text
+                Strand integer
             )"""
     )
 
@@ -273,10 +278,10 @@ class GenbankAnnotationDb(AnnotationDbBase):
             if sql is None:
                 data_placeholder = f"({','.join(('?',)*len(data))})"
                 sql = sql_template.format(data_placeholder)
-
+            
             self.db.execute(
                 sql,
-                data,
+                data
             )
 
     def db_query(
@@ -290,16 +295,16 @@ class GenbankAnnotationDb(AnnotationDbBase):
         strand: T = None,
     ):
         query, values = self._make_sql_query(
-            bio_type=bio_type, identifier=identifier, start=start, end=end
+            seq_name = seq_name, bio_type=bio_type, identifier=identifier, start=start, end=end
         )
-        self.db.execute(""" SELECT LocusID FROM GENBANK LIMIT 1""")
-        values.insert(0, seq_name)
+
         self.db.execute(query, tuple(values))
         return self.db.fetchall()
 
     def _make_sql_query(
         self,
         *,
+        seq_name: T = None,
         bio_type: T = None,
         identifier: T = None,
         start: int = None,
@@ -310,9 +315,13 @@ class GenbankAnnotationDb(AnnotationDbBase):
         if not any([bio_type, identifier]):
             raise ValueError("no arguments provided")
 
-        query = "SELECT * FROM GENBANK WHERE LocusID == ? AND "
+        query = "SELECT * FROM GENBANK WHERE "
         clauses = []
         values = []
+
+        if seq_name:
+            clauses.append("LocusID == ?")
+            values.append(seq_name)
 
         if bio_type:
             clauses.append("Type == ?")
@@ -353,7 +362,7 @@ class GenbankAnnotationDb(AnnotationDbBase):
             end=end,
             strand=strand,
         ):
-            id_ = json.loads(row["Locus_Tag"])[0]
+            id_ = row["Locus_Tag"]
 
             dict_value = id_ + row["Type"]
 
@@ -364,3 +373,48 @@ class GenbankAnnotationDb(AnnotationDbBase):
             }
 
         return list(rowdict.values())
+
+    def distinct(
+        self, *,
+        seq_name: bool = False,
+        bio_type: bool = False,
+        identifier: bool = False,
+    ) -> set:
+
+        if not any ([seq_name,bio_type,identifier]):
+            return set()
+
+        components = []
+        query_template = 'SELECT DISTINCT {} FROM genbank'
+
+        value_dict = dict()
+
+        if seq_name:
+            seq_name_set = set()
+            query_template_seq = query_template.format("LocusID")
+            self.db.execute('SELECT DISTINCT LocusID FROM genbank')
+            result = self.db.fetchall()
+            for row in result:
+                seq_name_set.add(row['LocusID'])
+            value_dict['LocusID'] = seq_name_set
+
+        if bio_type:
+            type_set = set()
+            query_template_type = query_template.format("Type")
+            self.db.execute('SELECT DISTINCT Type FROM genbank')
+            result = self.db.fetchall()
+            for row in result:
+                type_set.add(row['Type'])
+            value_dict['Type'] = type_set
+
+        if identifier:
+            identifier_set = set()
+            query_template_identifier = query_template.format("Attributes")
+            self.db.execute('SELECT DISTINCT Locus_Tag FROM genbank')
+            result = self.db.fetchall()
+            for row in result:
+                identifier_set.add(row['Locus_Tag'])
+            value_dict['identifier'] = identifier_set
+
+        
+        return value_dict
