@@ -79,7 +79,7 @@ def calc_rows(
 
     MIN_SCALE = -10000
     MAX_SCALE = +10000
-    SCALE_STEP = 2.0 ** 50
+    SCALE_STEP = 2.0**50
     MIN_FLOAT_VALUE = 1.0 / SCALE_STEP
 
     N = max(T.shape[0], T.shape[1])

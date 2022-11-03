@@ -5,7 +5,7 @@ produced by the same code."""
 
 # How many cells before using linear space alignment algorithm.
 # Should probably set to about half of physical memory / PointerEncoder.bytes
-HIRSCHBERG_LIMIT = 10 ** 8
+HIRSCHBERG_LIMIT = 10**8
 
 import warnings
 
@@ -50,9 +50,9 @@ class PointerEncoding(object):
         assert x > 0 and y > 0, (x, y)
         (x, y) = (numpy.ceil(numpy.log2([x + 1, y + 1]))).astype(int)
         s = 8 * self.bytes - sum([x, y])
-        assert s ** 2 >= 4 + 1, (x, y, s)  # min states required
+        assert s**2 >= 4 + 1, (x, y, s)  # min states required
         self.widths = numpy.array([x, y, s]).astype(int)
-        self.limits = 2 ** self.widths
+        self.limits = 2**self.widths
         self.max_states = self.limits[-1]
         if DEBUG:
             print(self.max_states, "states allowed in viterbi traceback")
@@ -813,7 +813,7 @@ class PairEmissionProbs(object):
             encoder = self.pair.get_pointer_encoding(len(T))
             problem_dimensions = self.pair.size + [len(T)]
             problem_size = numpy.product(problem_dimensions)
-            memory = problem_size * encoder.bytes / 10 ** 6
+            memory = problem_size * encoder.bytes / 10**6
             if dp_options.local:
                 msg = "Local alignment"
             elif (

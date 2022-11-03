@@ -60,13 +60,13 @@ def get_array_type(num_elements):
     """Returns the smallest numpy integer dtype that can contain elements
     within num_elements.
     """
-    if num_elements < 2 ** 8:
+    if num_elements < 2**8:
         dtype = uint8
-    elif num_elements < 2 ** 16:
+    elif num_elements < 2**16:
         dtype = uint16
-    elif num_elements < 2 ** 32:
+    elif num_elements < 2**32:
         dtype = uint32
-    elif num_elements < 2 ** 64:
+    elif num_elements < 2**64:
         dtype = uint64
     else:
         raise NotImplementedError(f"{num_elements} is too big for 64-bit integer")
@@ -307,7 +307,7 @@ class Enumeration(tuple):
     def _get_pairs(self):
         """Accessor for pairs, lazy evaluation."""
         if not hasattr(self, "_pairs"):
-            self._pairs = self ** 2
+            self._pairs = self**2
         return self._pairs
 
     pairs = property(_get_pairs)
@@ -315,7 +315,7 @@ class Enumeration(tuple):
     def _get_triples(self):
         """Accessor for triples, lazy evaluation."""
         if not hasattr(self, "_triples"):
-            self._triples = self ** 3
+            self._triples = self**3
         return self._triples
 
     Triples = property(_get_triples)

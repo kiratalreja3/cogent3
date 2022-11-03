@@ -169,7 +169,7 @@ class LikelihoodTreeEdge(_LikelihoodTreeEdge):
     integer_type = numerictypes(int)
 
     # For scaling very very small numbers
-    BASE = 2.0 ** 100
+    BASE = 2.0**100
     LOG_BASE = numpy.log(BASE)
 
     def sum_input_likelihoodsR(self, result, *likelihoods):

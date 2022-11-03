@@ -1,6 +1,6 @@
+import abc
 import copy
 import json
-import abc
 
 from collections import defaultdict
 from fnmatch import fnmatch
@@ -668,8 +668,8 @@ class GenbankAnnotationDb(AnnotationDbBase):
             self.populate_from_file(path)
 
     def populate_from_file(self, path):
-        from cogent3.parse.genbank import MinimalGenbankParser
         from cogent3 import open_
+        from cogent3.parse.genbank import MinimalGenbankParser
 
         with open_(path) as infile:
             data = list(MinimalGenbankParser(infile))
@@ -737,8 +737,8 @@ class GenbankAnnotationDb(AnnotationDbBase):
             }
 
         for feature in list(rowdict.values()):
-            for span in feature['spans']:
-                assert span[0] >= start 
+            for span in feature["spans"]:
+                assert span[0] >= start
                 assert span[1] <= end
 
         return list(rowdict.values())

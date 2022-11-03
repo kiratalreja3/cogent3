@@ -402,7 +402,7 @@ class LocationList(list):
     WARNING: Coordinates are based on 1, not 0, to match GenBank format.
     """
 
-    BIGNUM = 1e300 
+    BIGNUM = 1e300
 
     def first(self):
         """Returns first base of self."""

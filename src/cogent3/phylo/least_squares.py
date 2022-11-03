@@ -86,7 +86,7 @@ class WLS(TreeEvaluator):
                 lengths = solve(X, y)
                 lengths = maximum(lengths, 0.0)
             diffs = dot(A, lengths) - dists
-            err = sum(diffs ** 2)
+            err = sum(diffs**2)
             return (err, lengths)
 
         return evaluate

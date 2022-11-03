@@ -266,9 +266,9 @@ def test_make_gff3_db():
 def test_make_sql_query():
     """Test that the SQLlite queries are correctly formed"""
 
+    from cogent3 import load_unaligned_seqs
     from cogent3.core.annotation import GffAnnotationDb
     from cogent3.parse.gff import gff_parser
-    from cogent3 import load_unaligned_seqs
 
     fasta_path = "/Users/kiratalreja/Desktop/short.fa"
     seqs = load_unaligned_seqs(fasta_path, moltype="dna")
@@ -335,8 +335,8 @@ def test_db_query():
 
     # PENDING - NEED TO COVER THE CASE WITH NO ROWS RETURNED
 
-    from cogent3.core.annotation import GffAnnotationDb
     from cogent3 import load_unaligned_seqs
+    from cogent3.core.annotation import GffAnnotationDb
 
     fasta_path = "/Users/kiratalreja/Desktop/short.fa"
     seqs = load_unaligned_seqs(fasta_path, moltype="dna")
@@ -382,8 +382,8 @@ def test_find_records():
     """Test that the coordinates the grouped correctly, and features
     formed properly"""
 
-    from cogent3.core.annotation import GffAnnotationDb
     from cogent3 import load_unaligned_seqs
+    from cogent3.core.annotation import GffAnnotationDb
 
     gff_path = "/Users/kiratalreja/Downloads/prok_NoLocusTags.gff"
     db = GffAnnotationDb()
