@@ -187,8 +187,6 @@ class GffAnnotationDb(AnnotationDbBase):
         if not any ([seq_name,bio_type,identifier]):
             return set()
 
-
-
         value_dict = dict()
 
         if seq_name:
