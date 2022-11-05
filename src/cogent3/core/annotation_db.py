@@ -105,10 +105,10 @@ class GffAnnotationDb(AnnotationDbBase):
             )
 
     def db_query(
-        self, *, seq_name: T = None, bio_type: T = None, identifier: T = None
+        self, *, seq_name: T = None, bio_type: T = None, identifier: T = None, start: T = None, end: T = None, strand: T = None
     ):  # what return type
         query, values = self._make_sql_query(
-            seq_name=seq_name, bio_type=bio_type, identifier=identifier
+            seq_name=seq_name, bio_type=bio_type, identifier=identifier, start=start, end=end, strand=strand
         )
         self.db.execute(query, tuple(values))
         return self.db.fetchall()
@@ -121,6 +121,7 @@ class GffAnnotationDb(AnnotationDbBase):
         identifier: T = None,
         start: int = None,
         end: int = None,
+        strand : T = None
     ):
         # The user must provide one of the following arguments
         if not any([bio_type, identifier]):
@@ -156,12 +157,12 @@ class GffAnnotationDb(AnnotationDbBase):
         return query + " AND ".join(clauses), values
 
     def find_records(
-        self, *, seq_name: T = None, bio_type: T = None, identifier: T = None
+        self, *, seq_name: T = None, bio_type: T = None, identifier: T = None, start: T = None, end: T = None, strand: T = None
     ) -> list[R]:
         # this needs to be a typed dict
         rowdict = {}
         for row in self.db_query(
-            seq_name=seq_name, bio_type=bio_type, identifier=identifier
+            seq_name=seq_name, bio_type=bio_type, identifier=identifier,start=start,end=end
         ):
             attr = json.loads(row["Attributes"])
             id_ = attr["ID"]
@@ -293,7 +294,7 @@ class GenbankAnnotationDb(AnnotationDbBase):
         strand: T = None,
     ):
         query, values = self._make_sql_query(
-            seq_name = seq_name, bio_type=bio_type, identifier=identifier, start=start, end=end
+            seq_name = seq_name, bio_type=bio_type, identifier=identifier, start=start, end=end, strand=strand
         )
 
         self.db.execute(query, tuple(values))
@@ -382,14 +383,12 @@ class GenbankAnnotationDb(AnnotationDbBase):
         if not any ([seq_name,bio_type,identifier]):
             return set()
 
-        components = []
         query_template = 'SELECT DISTINCT {} FROM genbank'
 
         value_dict = dict()
 
         if seq_name:
             seq_name_set = set()
-            query_template_seq = query_template.format("LocusID")
             self.db.execute('SELECT DISTINCT LocusID FROM genbank')
             result = self.db.fetchall()
             for row in result:
@@ -398,7 +397,6 @@ class GenbankAnnotationDb(AnnotationDbBase):
 
         if bio_type:
             type_set = set()
-            query_template_type = query_template.format("Type")
             self.db.execute('SELECT DISTINCT Type FROM genbank')
             result = self.db.fetchall()
             for row in result:
@@ -407,7 +405,6 @@ class GenbankAnnotationDb(AnnotationDbBase):
 
         if identifier:
             identifier_set = set()
-            query_template_identifier = query_template.format("Attributes")
             self.db.execute('SELECT DISTINCT Locus_Tag FROM genbank')
             result = self.db.fetchall()
             for row in result:

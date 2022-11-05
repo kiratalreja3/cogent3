@@ -182,5 +182,29 @@ def test_find_records():
     assert got == expected
 
 
+def test_ordered_values():
+    from cogent3.core.annotation_db import _ordered_values
+    parsed_gff = gff_parser(gff_path)
+    example_dict = list(parsed_gff)[0]  
+    got = _ordered_values(example_dict)
+    expected = ['sequence001', 'mine','gene', 189, 255, '.', '+', '.', {'ID': 'gene0','Dbxref': 'ASAP:ABE-0000006','gene': 'thrL','gene_synonym': 'ECK0001'}]
+    assert got == expected
+
+    def return_type(values):
+        types = []
+        for v in values:
+            types.append(type(v))
+        return types
+
+    got = return_type(expected)
+    expected = [str, str, str, int, int, str, str, str, dict]
+    assert got == expected
+
+
 if __name__ == "__main__":
-    unittest.main()
+    test_db_query()
+    test_find_records()
+    test_make_gff3_db()
+    test_make_sql_query()
+    test_populate_from_file()
+    test_ordered_values()
