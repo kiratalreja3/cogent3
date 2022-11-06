@@ -108,7 +108,6 @@ def test_make_sql_query():
 def test_populate_from_file():
     """Test that the database is populated with the correct
     number of columns"""
-    from cogent3.core.annotation import GffAnnotationDb
     from cogent3.parse.gff import gff_parser
 
     gff_path = "/Users/kiratalreja/Downloads/prok_NoLocusTags.gff"
@@ -127,7 +126,6 @@ def test_db_query():
     number of rows for different combinations of bio_type/identifier"""
 
     from cogent3 import load_unaligned_seqs
-    from cogent3.core.annotation import GffAnnotationDb
 
     fasta_path = "/Users/kiratalreja/Desktop/short.fa"
     seqs = load_unaligned_seqs(fasta_path, moltype="dna")
@@ -173,7 +171,6 @@ def test_find_records():
     formed properly"""
 
     from cogent3 import load_unaligned_seqs
-    from cogent3.core.annotation import GffAnnotationDb
 
     gff_path = "/Users/kiratalreja/Downloads/prok_NoLocusTags.gff"
     db = GffAnnotationDb()
@@ -201,4 +198,10 @@ def test_find_records():
     got = len(db.find_records(start=0, end=len(seq), identifier="id020000"))
     expected = 1
     assert got == expected
+
+if __name__ == "__main__":
+    test_db_query()
+    test_find_records()
+    test_make_sql_query()
+    test_populate_from_file()
 
