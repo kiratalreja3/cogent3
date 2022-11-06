@@ -23,15 +23,6 @@ def test_make_db():
     expected = list((list(parsed_gff)[0]).keys())[:-1]
     assert got == expected
     
-    sql_columns = []
-    db = GenbankAnnotationDb(genbank_path)
-    data = db.db.execute("""SELECT * FROM GENBANK""")
-    for column in data.description:
-        sql_columns.append(column[0])
-    got = sql_columns
-    expected = ["LocusID","Type","Spans","Locus_Tag","Start","End","Strand"]
-    assert got == expected
-    
    
 def test_make_sql_query():
     """Test that the SQLlite queries are correctly formed"""
@@ -265,6 +256,174 @@ def test_ordered_values():
     assert got == expected
 
 
+def test_populate_from_file_genbank():
+    """Test that the GenBank database is populated with the correct
+    number of columns"""
+
+    db = GenbankAnnotationDb(genbank_path)
+
+    """test the number of rows populated, after skipping the
+    records without 'locus_tag' key"""
+    db.db.execute(""" SELECT * FROM Genbank """)
+    got = len(list(db.db.fetchall()))
+    
+    with open_(genbank_path) as infile:
+      data = list(MinimalGenbankParser(infile.readlines()))
+
+    record = data[0]
+    features = record['features']
+    expected = 0
+    for feature in features:
+        if "locus_tag" not in list(feature.keys()):
+            continue
+        expected +=1
+
+    assert got == expected
+
+
+def test_db_query_genbank():
+    """Test that the SQL query returns the correct
+    number of rows for different combinations of bio_type/identifier"""
+
+    import pytest
+    db = GenbankAnnotationDb(genbank_path)
+    with open_(genbank_path) as infile:
+     data = list(MinimalGenbankParser(infile.readlines()))
+    record = data[0]
+
+    """only the bio type is provided, along with start and end"""
+    got = len(db.db_query(start=0,end=len(record['sequence']),bio_type='CDS'))
+    expected = 4315
+    assert got == expected
+
+    """only the bio type is provided, and the end is sliced to half"""
+    got = len(db.db_query(end = len(record['sequence'])/2 ,bio_type='CDS'))
+    expected = 2199
+    assert got == expected
+    
+    """only the identifier is provided, along with start and end"""
+    got = len(db.db_query(start=0,end=len(record['sequence']),identifier='b4515'))
+    expected = 2
+    assert got == expected
+   
+    """both the bio type and identifier are provided"""
+    got = len(db.db_query(bio_type='CDS',identifier='b4515'))
+    expected = 1
+    assert got == expected
+   
+    """raise value error when bio type or identifer not provided"""
+
+    with pytest.raises(ValueError):
+            db.db_query(start=0,end=len(record['sequence']))
+    with pytest.raises(ValueError):
+            db.db_query()
+    with pytest.raises(ValueError):
+            db.db_query(start=0,end=len(record['sequence']),seq_name='SeqName')
+    with pytest.raises(ValueError):
+            db.db_query(seq_name='SeqName')        
+
+def make_genbank_db():
+        """Check if the genbank database created has the correct columns"""
+        sql_columns = []
+        db = GenbankAnnotationDb(genbank_path)
+        data = db.db.execute("""SELECT * FROM GENBANK""")
+        for column in data.description:
+            sql_columns.append(column[0])
+        got = sql_columns
+        expected = ["LocusID","Type","Spans","Locus_Tag","Start","End","Strand"]
+        assert got == expected
+
+def test_fetch_from_feature():
+
+    """Check if the genbank database created has the correct columns"""
+    from cogent3.core.annotation_db import _fetch_from_features
+    with open_(genbank_path) as infile:
+       data = list(MinimalGenbankParser(infile.readlines()))
+
+    record = data[0]
+    features = record['features']
+    got = _fetch_from_features(features[1])
+    expected = ['gene', '[[189, 255]]', 'b0001', 189, 255, 1]
+    assert got == expected
+
+    """Check the datatype of the values returned"""
+    def return_type(values):
+        types = []
+        for v in values:
+            types.append(type(v))
+        return types
+
+    got = return_type(_fetch_from_features(features[1]))
+    expected = [str,str,str,int,int,int]
+    assert got == expected
+
+def test_distinct_genbank():
+    db = GenbankAnnotationDb(genbank_path)
+    
+    """Only when the bio type is provided"""
+    got = len(db.distinct(bio_type=True)['Type'])
+    expected = 6
+    assert got == expected
+    
+    """Only when the LocusID/seq_name is provided"""
+    got = len(db.distinct(seq_name=True)['LocusID'])
+    expected = 1
+    assert got == expected
+    
+    """Only when the identifier is provided"""
+    got = len(db.distinct(identifier=True)['identifier'])
+    expected = 4639
+    assert got == expected
+    
+    """Check the number of keys created"""
+    got = len(db.distinct(bio_type=True,identifier=True, seq_name=True))
+    expected = 3
+    assert got == expected
+    
+    """Number of unique bio_type values when all three attributes are passed"""
+    got = len(db.distinct(bio_type=True,identifier=True, seq_name=True)['Type'])
+    expected = 6
+    assert got == expected
+   
+    """Number of unique LocusID values when all three attributes are passed"""
+    got = len(db.distinct(bio_type=True,identifier=True, seq_name=True)['LocusID'])
+    expected = 1
+    assert got == expected
+
+    """Number of unique identifer values when all three attributes are passed"""
+    got = len(db.distinct(bio_type=True,identifier=True, seq_name=True)['identifier'])
+    expected = 4639
+    assert got == expected
+
+def test_find_records_genbank():
+    import pytest
+    db = GenbankAnnotationDb(genbank_path)
+   
+    """Number of records found when bio type is passed"""
+    got = len(db.find_records(seq_name='NC_000913',bio_type='CDS'))
+    expected = 4305
+    assert got == expected
+    
+    "Number of records found when the identifier is passed"
+    got = len(db.find_records(seq_name='NC_000913',identifier='b1492'))
+    expected = 2
+    assert got == expected
+    
+    """Number of records found when both the identifier and bio type are passed"""
+    got = len(db.find_records(seq_name='NC_000913',identifier='b1492',bio_type='CDS'))
+    expected = 1
+    assert got == expected
+    
+    """Check value error when bio_type and identifier are not passed"""
+    with pytest.raises(ValueError):
+        db.find_records(seq_name='NC_000913')
+    with pytest.raises(ValueError):
+        db.find_records(seq_name='NC_000913',start=0,end=5000)
+    with pytest.raises(ValueError):
+        db.find_records(start=0,end=5000)
+    
+
+
 
 if __name__ == "__main__":
     test_db_query()
@@ -272,4 +431,10 @@ if __name__ == "__main__":
     test_make_sql_query()
     test_populate_from_file()
     test_distinct()
+    test_populate_from_file_genbank()
+    test_db_query_genbank()
+    test_fetch_from_feature()
+    test_distinct_genbank()
+    test_find_records_genbank()
+
 
