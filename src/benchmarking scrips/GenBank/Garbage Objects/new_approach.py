@@ -7,7 +7,7 @@ from cogent3.core.annotation import GenbankAnnotationDb
 def new_approach():
     gff_path = "/Users/kiratalreja/Downloads/NC_000913.3.gb"
     db = GenbankAnnotationDb(gff_path)
-
+    
    
 
 

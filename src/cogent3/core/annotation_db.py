@@ -1,3 +1,7 @@
+"""Contains an abstract base class for the implementation
+of storing sequence annotations in an in-memory SQLite database. The classes for 
+GenBank and GFF files have been implemented, along with all the required helper functions"""
+
 from __future__ import annotations
 
 import abc
@@ -333,6 +337,14 @@ def _fetch_from_features(feature):
 
 
 def _make_genbank_db():
+
+    """initialises an in-memory database
+
+    Returns:
+    SQLite cursor : the in-memory database
+
+    """
+
     conn = sqlite3.connect(":memory:")
     conn.row_factory = sqlite3.Row
 
@@ -359,6 +371,12 @@ class GenbankAnnotationDb(AnnotationDbBase):
         self._populate_from_file(path)
 
     def _populate_from_file(self, path):
+
+        """loads the in-memory database with values from the parsed GenBank file
+
+        Args:
+            path : user-provided path to the GenBank file
+        """
         with open_(path) as infile:
             data = list(MinimalGenbankParser(infile.readlines()))
 
@@ -424,6 +442,24 @@ class GenbankAnnotationDb(AnnotationDbBase):
         end: int = None,
         strand: T = None,
     ):
+
+        """generates an SQL query with user-provided arguments
+
+        Args:
+            seq_name (T, optional): sequence name, eg "sequence001". Defaults to None.
+            bio_type (T, optional): bio type of the annotation, eg "CDS". Defaults to None.
+            identifier (T, optional): the unique identifier. Defaults to None.
+            start (int, optional): start coordinate value of the annotation. Defaults to None.
+            end (int, optional): end coordinate value of the annotation. Defaults to None.
+            strand (T, optional): strand value, unused for now. Defaults to None.
+
+        Raises:
+            ValueError: when either bio_type or identifier is not provided
+
+        Returns:
+            (string,list): returns a tuple of the SQL query string and a list of values corresponding to the query
+        """
+
         if not any([bio_type, identifier]):
             raise ValueError("no arguments provided")
 
@@ -465,6 +501,22 @@ class GenbankAnnotationDb(AnnotationDbBase):
         end: int = None,
         strand: T = None,
     ) -> list[R]:
+
+
+        """converts the results of queries into relevant format for constructing _Annotatable objects
+
+        Args:
+        seq_name (T, optional): sequence name, eg "sequence001". Defaults to None.
+        bio_type (T, optional): bio type of the annotation, eg "CDS". Defaults to None.
+        identifier (T, optional): the unique identifier. Defaults to None.
+        start (int, optional): start coordinate value of the annotation. Defaults to None.
+        end (int, optional): end coordinate value of the annotation. Defaults to None.
+        strand (T, optional): strand value, unused for now. Defaults to None.
+
+        Returns:
+            list: a list with each element that can be made into a _Annotatable object
+        """
+
         rowdict = {}
         for row in self.db_query(
             seq_name=seq_name,
@@ -493,6 +545,17 @@ class GenbankAnnotationDb(AnnotationDbBase):
         bio_type: bool = False,
         identifier: bool = False,
     ) -> dict:
+
+        """returns the unique values for user-provided arguments from the database
+
+        Args:
+            seq_name (bool, optional): _description_. Defaults to False.
+            bio_type (bool, optional): _description_. Defaults to False.
+            identifier (bool, optional): _description_. Defaults to False.
+
+        Returns:
+            dict: _description_
+        """
 
         if not any([seq_name, bio_type, identifier]):
             return dict()

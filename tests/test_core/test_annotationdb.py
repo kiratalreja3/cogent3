@@ -14,8 +14,6 @@ def test_make_db():
     in terms of the names of columns & the number of entries"""
 
     db = GffAnnotationDb(gff_path)
-
-    """Test the name of columns created"""
     sql_columns = []
     data = db.db.execute("""SELECT * FROM GFF""")
     for column in data.description:
@@ -116,7 +114,7 @@ def test_make_sql_query():
             seq_name=None, bio_type=None, identifier=None, start=None, end=None
         )
 
-    """check exception when both bio_type and identifier are missing, even if other attributes"""
+    """check exception when both bio_type and identifier are missing"""
 
     with pytest.raises(ValueError):
         db._make_sql_query(
@@ -150,8 +148,6 @@ def test_populate_from_file():
     number of columns"""
 
     db = GffAnnotationDb(gff_path)
-
-    """test the number of rows populated"""
     db.db.execute(""" SELECT * FROM GFF """)
     got = len(list(db.db.fetchall()))
     parsed_gff = gff_parser(gff_path)
