@@ -232,49 +232,49 @@ def test_find_records():
     assert got == expected
 
 
-def test_distinct():
+def test_describe():
 
     """Test that the number of unique values returned are correct"""
 
     db = GffAnnotationDb(gff_path)
 
     """An empty set when nothing is provided"""
-    got = db.distinct()
-    expected = set()
+    got = db.describe()
+    expected = dict()
     assert got == expected
 
     """Only the bio_type is provided"""
-    got = len(db.distinct(bio_type=True)["Type"])
+    got = len(db.describe(bio_type=True)["Type"])
     expected = 9
     assert got == expected
 
     """Only the seq_name is provided"""
-    got = len(db.distinct(seq_name=True)["SeqID"])
+    got = len(db.describe(seq_name=True)["SeqID"])
     expected = 1
     assert got == expected
 
     """Only the identifier is provided"""
-    got = len(db.distinct(identifier=True)["identifier"])
+    got = len(db.describe(identifier=True)["identifier"])
     expected = 21
     assert got == expected
 
     """Check that the set has three keys when all three arguments are True"""
-    got = len(db.distinct(bio_type=True, seq_name=True, identifier=True))
+    got = len(db.describe(bio_type=True, seq_name=True, identifier=True))
     expected = 3
     assert got == expected
 
     """Correct number of Type values when all three arguments are True"""
-    got = len(db.distinct(bio_type=True, seq_name=True, identifier=True)["Type"])
+    got = len(db.describe(bio_type=True, seq_name=True, identifier=True)["Type"])
     expected = 9
     assert got == expected
 
     """Correct number of identifier values when all three arguments are True"""
-    got = len(db.distinct(bio_type=True, seq_name=True, identifier=True)["identifier"])
+    got = len(db.describe(bio_type=True, seq_name=True, identifier=True)["identifier"])
     expected = 21
     assert got == expected
 
     """Correct number of SeqID values when all three arguments are True"""
-    got = len(db.distinct(bio_type=True, seq_name=True, identifier=True)["SeqID"])
+    got = len(db.describe(bio_type=True, seq_name=True, identifier=True)["SeqID"])
     expected = 1
     assert got == expected
 
@@ -425,45 +425,45 @@ def test_fetch_from_feature():
     assert got == expected
 
 
-def test_distinct_genbank():
+def test_describe_genbank():
     db = GenbankAnnotationDb(genbank_path)
     
-    got = db.distinct()
-    expected = set()
+    got = db.describe()
+    expected = dict()
     assert got == expected
 
     """Only when the bio type is provided"""
-    got = len(db.distinct(bio_type=True)["Type"])
+    got = len(db.describe(bio_type=True)["Type"])
     expected = 6
     assert got == expected
 
     """Only when the LocusID/seq_name is provided"""
-    got = len(db.distinct(seq_name=True)["LocusID"])
+    got = len(db.describe(seq_name=True)["LocusID"])
     expected = 1
     assert got == expected
 
     """Only when the identifier is provided"""
-    got = len(db.distinct(identifier=True)["identifier"])
+    got = len(db.describe(identifier=True)["identifier"])
     expected = 4639
     assert got == expected
 
     """Check the number of keys created"""
-    got = len(db.distinct(bio_type=True, identifier=True, seq_name=True))
+    got = len(db.describe(bio_type=True, identifier=True, seq_name=True))
     expected = 3
     assert got == expected
 
     """Number of unique bio_type values when all three attributes are passed"""
-    got = len(db.distinct(bio_type=True, identifier=True, seq_name=True)["Type"])
+    got = len(db.describe(bio_type=True, identifier=True, seq_name=True)["Type"])
     expected = 6
     assert got == expected
 
     """Number of unique LocusID values when all three attributes are passed"""
-    got = len(db.distinct(bio_type=True, identifier=True, seq_name=True)["LocusID"])
+    got = len(db.describe(bio_type=True, identifier=True, seq_name=True)["LocusID"])
     expected = 1
     assert got == expected
 
     """Number of unique identifer values when all three attributes are passed"""
-    got = len(db.distinct(bio_type=True, identifier=True, seq_name=True)["identifier"])
+    got = len(db.describe(bio_type=True, identifier=True, seq_name=True)["identifier"])
     expected = 4639
     assert got == expected
 
@@ -609,9 +609,9 @@ if __name__ == "__main__":
     test_find_records()
     test_make_sql_query()
     test_populate_from_file()
-    test_distinct()
+    test_describe()
     test_populate_from_file_genbank()
     test_db_query_genbank()
     test_fetch_from_feature()
-    test_distinct_genbank()
+    test_describe_genbank()
     test_find_records_genbank()

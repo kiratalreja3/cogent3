@@ -4,7 +4,8 @@ import abc
 import json
 import sqlite3
 
-from typing import Optional, TypeVar
+from typing import Optional
+from typing import TypedDict
 
 from cogent3 import open_
 from cogent3.parse.genbank import MinimalGenbankParser
@@ -12,9 +13,11 @@ from cogent3.parse.gff import gff_parser
 
 
 T = Optional[str]
-R = TypeVar(
-    "R"
-)  # define properly, a typed dict, we need to ensure appropriate keys in a dict for constructing cogent3.annotation.Feature instances
+
+class R(TypedDict):
+    name : str
+    type : str
+    spans : list[(int,int)]
 
 
 class AnnotationDbBase(abc.ABC):
@@ -461,7 +464,7 @@ class GenbankAnnotationDb(AnnotationDbBase):
         start: int = None,
         end: int = None,
         strand: T = None,
-    ) -> R:
+    ) -> list[R]:
         rowdict = {}
         for row in self.db_query(
             seq_name=seq_name,
@@ -478,7 +481,7 @@ class GenbankAnnotationDb(AnnotationDbBase):
             rowdict[dict_value] = {
                 "name": id_,
                 "type": row["Type"],
-                "spans": json.loads(row["Spans"]),
+                "spans": [tuple(l) for l in json.loads(row["Spans"])]
             }
 
         return list(rowdict.values())
@@ -493,8 +496,6 @@ class GenbankAnnotationDb(AnnotationDbBase):
 
         if not any([seq_name, bio_type, identifier]):
             return dict()
-
-        query_template = "SELECT DISTINCT {} FROM genbank"
 
         value_dict = dict()
 

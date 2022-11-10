@@ -618,7 +618,7 @@ def extract_nt_prot_seqs(rec, wanted=wanted_types):
 
 
 def RichGenbankParser(
-    handle, info_excludes=None, moltype=None, skip_contigs=False, add_annotation=None
+    handle, info_excludes=None, moltype=None, skip_contigs=False, add_annotation=None,limit=None
 ):
     """Returns annotated sequences from GenBank formatted file.
 
@@ -670,7 +670,7 @@ def RichGenbankParser(
                     yield rec["locus"], None
             continue
 
-        for feature in rec["features"]:
+        for feature in rec["features"][:500]:
             spans = []
             reversed = None
             if feature["location"] is None or feature["type"] in ["source", "organism"]:
